@@ -1,19 +1,24 @@
-import React, { useEffect, useState } from "react";
-import axios from "axios";
+import React, { useCallback, useEffect, useState } from "react";
 
 import Input from "./components/Input";
 import List from "./components/List";
 import Pagination from "./components/Pagination";
 
+import TaskService from "./services/tasks";
+
 function App() {
   const [tasks, setTasks] = useState([]);
   const [value, setValue] = useState("");
 
-  useEffect(() => {
-    axios("http://localhost:3001/tasks").then((response) =>
-      setTasks(response.data)
-    );
+  const getTasks = useCallback(async () => {
+    const data = await TaskService.getTasks();
+
+    setTasks(data);
   }, []);
+
+  useEffect(() => {
+    getTasks();
+  }, [getTasks]);
 
   function handleChange(event) {
     setValue(event.target.value);
@@ -21,16 +26,20 @@ function App() {
 
   async function handleClick() {
     if (value) {
-      await axios.post("http://localhost:3001/tasks", {
+      await TaskService.saveTask({
         title: value,
       });
 
       setValue("");
 
-      const response = await axios("http://localhost:3001/tasks");
-
-      setTasks(response.data);
+      getTasks();
     }
+  }
+
+  async function handleDelete(id) {
+    await TaskService.deleteTask(id);
+
+    getTasks();
   }
 
   return (
@@ -45,7 +54,11 @@ function App() {
 
       <button onClick={handleClick}>Adicionar task</button>
 
-      <List tasks={tasks} />
+      <div>
+        {!!tasks.length && <List tasks={tasks} onDelete={handleDelete} />}
+
+        {!tasks.length && "Carregando..."}
+      </div>
 
       <Pagination page="1" />
     </div>
