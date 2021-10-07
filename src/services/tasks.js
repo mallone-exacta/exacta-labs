@@ -1,10 +1,13 @@
 import api from "./api";
 
 class TaskService {
-  static async getTasks() {
-    const response = await api.get("/tasks");
+  static async getTasks({ page, limit = 5 }) {
+    const response = await api.get(`/tasks?_page=${page}&_limit=${limit}`);
 
-    return response.data;
+    return {
+      data: response.data,
+      total: response.headers["x-total-count"],
+    };
   }
 
   static async saveTask(task) {
